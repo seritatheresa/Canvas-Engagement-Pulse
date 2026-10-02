@@ -1,0 +1,775 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Canvas Engagement Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --surface-2:   #f2f1ec;
+    --text-1:      #0b0b0b;
+    --text-2:      #52514e;
+    --text-muted:  #898781;
+    --grid:        #e1e0d9;
+    --axis:        #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --accent:      #2a78d6;
+    --accent-ink:  #ffffff;
+    --seq-100:     #cde2fb;
+    --seq-250:     #86b6ef;
+    --seq-400:     #3987e5;
+    --seq-500:     #256abf;
+    --seq-650:     #104281;
+    --good:        #0ca30c;
+    --warning:     #fab219;
+    --serious:     #ec835a;
+    --critical:    #d03b3b;
+    --good-text:   #006300;
+    --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100;
+    --cat-5: #e87ba4; --cat-6: #008300; --cat-7: #4a3aa7; --cat-8: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:        #0d0d0d;
+      --surface:     #1a1a19;
+      --surface-2:   #232322;
+      --text-1:      #ffffff;
+      --text-2:      #c3c2b7;
+      --text-muted:  #898781;
+      --grid:        #2c2c2a;
+      --axis:        #383835;
+      --border:      rgba(255,255,255,0.10);
+      --accent:      #3987e5;
+      --seq-100:     #104281; --seq-250:     #184f95; --seq-400: #256abf;
+      --seq-500:     #3987e5; --seq-650:     #86b6ef;
+      --good:        #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #e66767;
+      --good-text:   #0ca30c;
+      --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+      --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:        #0d0d0d;
+    --surface:     #1a1a19;
+    --surface-2:   #232322;
+    --text-1:      #ffffff;
+    --text-2:      #c3c2b7;
+    --text-muted:  #898781;
+    --grid:        #2c2c2a;
+    --axis:        #383835;
+    --border:      rgba(255,255,255,0.10);
+    --accent:      #3987e5;
+    --seq-100:     #104281; --seq-250:     #184f95; --seq-400: #256abf;
+    --seq-500:     #3987e5; --seq-650:     #86b6ef;
+    --good:        #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #e66767;
+    --good-text:   #0ca30c;
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+    --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-1);
+    font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    padding-inline: 20px;
+    padding-block: 20px;
+  }
+  h1, h2, h3 { font-family: "Manrope", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header.top {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: 8px 24px; padding-block: 4px 18px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+  }
+  header.top .title-block { display: flex; flex-direction: column; gap: 4px; }
+  header.top h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+  header.top .sub { color: var(--text-2); font-size: 13px; }
+  header.top .meta { text-align: right; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+  header.top .meta b { color: var(--text-2); font-weight: 600; }
+
+  .live-banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: color-mix(in srgb, var(--good) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--good) 30%, var(--border));
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; font-size: 12.5px; color: var(--text-2);
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent);
+  }
+  .live-banner b { color: var(--text-1); }
+
+  nav.tabs {
+    display: flex; gap: 4px; margin-bottom: 22px; border-bottom: 1px solid var(--border);
+    overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  nav.tabs button {
+    appearance: none; border: none; background: none; cursor: pointer;
+    font-family: "Manrope", sans-serif; font-weight: 700; font-size: 13.5px;
+    color: var(--text-muted); padding: 9px 14px; border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  nav.tabs button:hover { color: var(--text-2); }
+  nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  section.panel { display: flex; flex-direction: column; gap: 26px; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat-tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-tile .label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+  .stat-tile .value { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 25px; font-variant-numeric: tabular-nums; }
+  .stat-tile .value.crit { color: var(--critical); }
+  .stat-tile .value.good { color: var(--good-text); }
+  .stat-tile .hint { font-size: 12px; color: var(--text-muted); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .card .card-sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; }
+
+  .two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 12px; color: var(--text-2); margin-top: 10px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+  svg.chart text { fill: var(--text-muted); font-size: 10.5px; font-family: "Source Sans 3", sans-serif; }
+  svg.chart .axis-line { stroke: var(--axis); stroke-width: 1; }
+  svg.chart .grid-line { stroke: var(--grid); stroke-width: 1; }
+  svg.chart .value-label { fill: var(--text-2); font-weight: 600; font-family: "IBM Plex Mono", monospace; }
+
+  .bar-row-label { fill: var(--text-2); font-size: 11.5px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .controls input[type="search"] {
+    flex: 1 1 220px; min-width: 160px; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-1); font-size: 13.5px;
+  }
+  .controls select {
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-1); font-size: 13.5px;
+  }
+  .chip {
+    appearance: none; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2);
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .table-scroll { overflow-x: auto; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px; }
+  table.data th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--surface); cursor: pointer; white-space: nowrap;
+  }
+  table.data th.num, table.data td.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  table.data td { padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  table.data tbody tr:hover { background: var(--surface-2); }
+
+  .flags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .flag {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .flag.zero { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+  .flag.nosub { background: color-mix(in srgb, var(--serious) 18%, transparent); color: var(--serious); }
+  .flag.low { background: color-mix(in srgb, var(--warning) 22%, transparent); color: color-mix(in srgb, var(--warning) 65%, var(--text-1)); }
+
+  .risk-pill {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 26px; padding: 2px 7px;
+    border-radius: 999px; font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 11.5px;
+  }
+  .risk-pill.r4, .risk-pill.r5 { background: color-mix(in srgb, var(--critical) 20%, transparent); color: var(--critical); }
+  .risk-pill.r2, .risk-pill.r3 { background: color-mix(in srgb, var(--serious) 20%, transparent); color: var(--serious); }
+  .risk-pill.r1 { background: color-mix(in srgb, var(--warning) 24%, transparent); color: color-mix(in srgb, var(--warning) 60%, var(--text-1)); }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 12.5px; color: var(--text-muted); gap: 10px; flex-wrap: wrap; }
+  .pager .btns { display: flex; gap: 6px; }
+  .pager button {
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); border-radius: 6px;
+    padding: 5px 10px; font-size: 12.5px; cursor: pointer;
+  }
+  .pager button:disabled { opacity: 0.4; cursor: default; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; background: var(--text-1); color: var(--page);
+    font-size: 11.5px; padding: 6px 9px; border-radius: 6px; line-height: 1.4; z-index: 50;
+    opacity: 0; transform: translateY(2px); transition: opacity 0.08s ease;
+    font-family: "IBM Plex Mono", monospace; white-space: nowrap;
+  }
+  .tooltip.show { opacity: 1; }
+
+  .note {
+    font-size: 12.5px; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .note b { color: var(--text-2); }
+
+  .toggle-group { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .toggle-group button {
+    border: none; background: var(--surface-2); color: var(--text-2); font-size: 12.5px; font-weight: 600;
+    padding: 7px 12px; cursor: pointer;
+  }
+  .toggle-group button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  [hidden] { display: none !important; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="title-block">
+      <h1>Canvas Engagement Pulse</h1>
+      <div class="sub">Student &amp; instructor activity across MVSU Online courses</div>
+    </div>
+    <div class="meta">
+      __TERM_HTML__, online &amp; dual-enrollment sections<br>
+      Grades reference: <b>Summer 2026</b> (most recently completed term)
+    </div>
+  </header>
+
+  <div class="live-banner" id="live-banner"></div>
+
+  <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
+    <button role="tab" aria-selected="false" data-tab="atrisk">At-Risk Students</button>
+    <button role="tab" aria-selected="false" data-tab="engagement">Course Engagement</button>
+    <button role="tab" aria-selected="false" data-tab="grades">Grades &amp; Outcomes</button>
+  </nav>
+
+  <section class="panel" id="panel-overview"></section>
+  <section class="panel" id="panel-atrisk" hidden></section>
+  <section class="panel" id="panel-engagement" hidden></section>
+  <section class="panel" id="panel-grades" hidden></section>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script id="live-data" type="application/json">
+__LIVE_DATA__
+</script>
+<script id="grades-data" type="application/json">
+__GRADES_DATA__
+</script>
+
+<script>
+(function () {
+  "use strict";
+  const DATA = JSON.parse(document.getElementById('live-data').textContent);
+  const GRADES = JSON.parse(document.getElementById('grades-data').textContent);
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+  const fmt = (n) => (n === null || n === undefined) ? "—" : n.toLocaleString();
+  const pct = (n) => (n === null || n === undefined) ? "—" : n.toFixed(1) + "%";
+
+  const tooltip = $('#tooltip');
+  function showTip(evt, html) {
+    tooltip.innerHTML = html;
+    tooltip.classList.add('show');
+    moveTip(evt);
+  }
+  function moveTip(evt) {
+    const pad = 14;
+    tooltip.style.left = (evt.clientX + pad) + 'px';
+    tooltip.style.top = (evt.clientY + pad) + 'px';
+  }
+  function hideTip() { tooltip.classList.remove('show'); }
+
+  // ---------- Live banner ----------
+  const o = DATA.overview;
+  $('#live-banner').innerHTML = `
+    <span class="live-dot" aria-hidden="true"></span>
+    <span><b>Live from Canvas Analytics API</b> — pulled ${esc(o.dataAsOf)} for ${fmt(o.onlineCoursesPulled)} of ${fmt(o.onlineCoursesMatched)} matched online/DE courses
+    (${fmt(o.onlineCoursesFailed)} returned no analytics data, typically unpublished or not-yet-active sections).</span>
+  `;
+
+  // ---------- Tabs ----------
+  const tabs = $$('nav.tabs button');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
+      $$('section.panel').forEach(p => p.hidden = true);
+      const panel = $('#panel-' + btn.dataset.tab);
+      panel.hidden = false;
+      if (!panel.dataset.rendered) { renderPanel(btn.dataset.tab); panel.dataset.rendered = '1'; }
+    });
+  });
+
+  // ================= SVG chart helpers =================
+  const NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function hBarChart(container, rows, opts) {
+    opts = opts || {};
+    const width = 560, rowH = 26, gap = 6, leftPad = opts.leftPad || 150, rightPad = 46, topPad = 6;
+    const n = rows.length;
+    const height = topPad + n * (rowH + gap);
+    const max = Math.max(1, ...rows.map(r => r.value));
+    const svg = svgEl('svg', { class: 'chart', viewBox: `0 0 ${width} ${height}`, width: '100%', height: height, role: 'img', 'aria-label': opts.label || 'bar chart' });
+    const plotW = width - leftPad - rightPad;
+    rows.forEach((r, i) => {
+      const y = topPad + i * (rowH + gap);
+      const w = Math.max(2, (r.value / max) * plotW);
+      const label = svgEl('text', { x: leftPad - 10, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'bar-row-label' });
+      label.textContent = r.name.length > 26 ? r.name.slice(0, 25) + '…' : r.name;
+      svg.appendChild(label);
+      const track = svgEl('rect', { x: leftPad, y: y, width: plotW, height: rowH, rx: 4, fill: 'var(--grid)', opacity: 0.5 });
+      svg.appendChild(track);
+      const bar = svgEl('rect', { x: leftPad, y: y, width: w, height: rowH, rx: 4, fill: opts.color || 'var(--seq-400)' });
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', (e) => showTip(e, `<b>${r.name}</b><br>${opts.valueLabel || 'value'}: ${fmt(r.value)}${r.extra ? '<br>' + r.extra : ''}`));
+      bar.addEventListener('mouseleave', hideTip);
+      svg.appendChild(bar);
+      const vt = svgEl('text', { x: leftPad + w + 6, y: y + rowH / 2 + 4, class: 'value-label' });
+      vt.textContent = fmt(r.value);
+      svg.appendChild(vt);
+    });
+    container.innerHTML = '';
+    container.appendChild(svg);
+  }
+
+  function lineChart(container, points, opts) {
+    opts = opts || {};
+    const width = 900, height = 220, padL = 44, padR = 16, padT = 14, padB = 26;
+    const plotW = width - padL - padR, plotH = height - padT - padB;
+    const max = Math.max(1, ...points.map(p => p.value));
+    const svg = svgEl('svg', { class: 'chart', viewBox: `0 0 ${width} ${height}`, width: '100%', height: height, role: 'img', 'aria-label': opts.label || 'line chart' });
+
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const y = padT + plotH - (i / steps) * plotH;
+      svg.appendChild(svgEl('line', { x1: padL, x2: width - padR, y1: y, y2: y, class: 'grid-line' }));
+      const t = svgEl('text', { x: padL - 8, y: y + 3, 'text-anchor': 'end' });
+      t.textContent = fmt(Math.round((i / steps) * max));
+      svg.appendChild(t);
+    }
+    svg.appendChild(svgEl('line', { x1: padL, x2: width - padR, y1: padT + plotH, y2: padT + plotH, class: 'axis-line' }));
+
+    const stepX = plotW / Math.max(1, points.length - 1);
+    const xy = points.map((p, i) => [padL + i * stepX, padT + plotH - (p.value / max) * plotH]);
+
+    let areaPath = `M ${xy[0][0]} ${padT + plotH} `;
+    xy.forEach(([x, y]) => areaPath += `L ${x} ${y} `);
+    areaPath += `L ${xy[xy.length - 1][0]} ${padT + plotH} Z`;
+    svg.appendChild(svgEl('path', { d: areaPath, fill: 'var(--seq-100)', opacity: 0.55 }));
+
+    let linePath = `M ${xy[0][0]} ${xy[0][1]} `;
+    xy.slice(1).forEach(([x, y]) => linePath += `L ${x} ${y} `);
+    svg.appendChild(svgEl('path', { d: linePath, fill: 'none', stroke: 'var(--seq-500)', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+
+    const labelIdx = [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    labelIdx.forEach(i => {
+      const t = svgEl('text', { x: xy[i][0], y: height - 6, 'text-anchor': i === 0 ? 'start' : (i === points.length - 1 ? 'end' : 'middle') });
+      t.textContent = points[i].label;
+      svg.appendChild(t);
+    });
+
+    xy.forEach(([x, y], i) => {
+      const hit = svgEl('rect', { x: x - stepX / 2, y: padT, width: Math.max(2, stepX), height: plotH, fill: 'transparent' });
+      hit.style.cursor = 'crosshair';
+      const dot = svgEl('circle', { cx: x, cy: y, r: 0, fill: 'var(--seq-500)' });
+      hit.addEventListener('mousemove', (e) => {
+        showTip(e, `<b>${points[i].label}</b><br>views: ${fmt(points[i].value)}${points[i].extra ? '<br>' + points[i].extra : ''}`);
+      });
+      hit.addEventListener('mouseenter', () => dot.setAttribute('r', 5));
+      hit.addEventListener('mouseleave', () => { hideTip(); dot.setAttribute('r', 0); });
+      svg.appendChild(dot);
+      svg.appendChild(hit);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(svg);
+  }
+
+  function vBarChart(container, rows, opts) {
+    opts = opts || {};
+    const n = rows.length;
+    const width = Math.max(360, n * 62), height = 240, padL = 46, padR = 10, padT = 10, padB = 56;
+    const plotW = width - padL - padR, plotH = height - padT - padB;
+    const max = Math.max(1, ...rows.map(r => r.value));
+    const svg = svgEl('svg', { class: 'chart', viewBox: `0 0 ${width} ${height}`, width: '100%', height: height, role: 'img', 'aria-label': opts.label || 'bar chart' });
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const y = padT + plotH - (i / steps) * plotH;
+      svg.appendChild(svgEl('line', { x1: padL, x2: width - padR, y1: y, y2: y, class: 'grid-line' }));
+      const t = svgEl('text', { x: padL - 8, y: y + 3, 'text-anchor': 'end' });
+      t.textContent = fmt(Math.round((i / steps) * max));
+      svg.appendChild(t);
+    }
+    const bw = plotW / n;
+    rows.forEach((r, i) => {
+      const barW = Math.min(38, bw * 0.6);
+      const x = padL + i * bw + (bw - barW) / 2;
+      const h = Math.max(2, (r.value / max) * plotH);
+      const y = padT + plotH - h;
+      const bar = svgEl('rect', { x, y, width: barW, height: h, rx: 4, fill: r.color || opts.color || 'var(--seq-400)' });
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', (e) => showTip(e, `<b>${r.name}</b><br>${opts.valueLabel || 'count'}: ${fmt(r.value)}`));
+      bar.addEventListener('mouseleave', hideTip);
+      svg.appendChild(bar);
+      const lbl = svgEl('text', { x: x + barW / 2, y: height - padB + 16, 'text-anchor': 'end', transform: `rotate(-40 ${x + barW / 2} ${height - padB + 16})` });
+      lbl.textContent = r.name.length > 14 ? r.name.slice(0, 13) + '…' : r.name;
+      svg.appendChild(lbl);
+    });
+    svg.appendChild(svgEl('line', { x1: padL, x2: width - padR, y1: padT + plotH, y2: padT + plotH, class: 'axis-line' }));
+    container.innerHTML = '';
+    container.appendChild(svg);
+  }
+
+  // ================= Panel: Overview =================
+  function renderOverview() {
+    const panel = $('#panel-overview');
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div class="stat-row">
+        <div class="stat-tile"><div class="label">Online/DE students tracked</div><div class="value">${fmt(o.onlineStudentsTracked)}</div><div class="hint">across ${fmt(o.onlineCoursesPulled)} online &amp; DE courses</div></div>
+        <div class="stat-tile"><div class="label">Students at risk</div><div class="value crit">${fmt(o.onlineAtRiskStudents)}</div><div class="hint">zero activity, missing work, or low views</div></div>
+        <div class="stat-tile"><div class="label">Account-wide courses</div><div class="value">${fmt(o.accountCourses)}</div><div class="hint">${fmt(o.accountTeachers)} teachers &middot; ${fmt(o.accountStudents)} students</div></div>
+        <div class="stat-tile"><div class="label">Account-wide page views</div><div class="value">${fmt(o.accountTotalViews)}</div><div class="hint">${fmt(o.accountTotalParticipations)} participations, all courses</div></div>
+        <div class="stat-tile"><div class="label">Online/DE page views</div><div class="value">${fmt(o.onlineTotalViews)}</div><div class="hint">${fmt(o.onlineTotalParticipations)} participations</div></div>
+        <div class="stat-tile"><div class="label">Assignments on record</div><div class="value">${fmt(o.accountAssignments)}</div><div class="hint">${fmt(o.accountDiscussionTopics)} discussion topics</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <h2>Daily activity — online &amp; DE courses</h2>
+          <div class="card-sub">Page views per day, matched online/dual-enrollment courses only</div>
+          <div id="chart-daily-online"></div>
+        </div>
+        <div class="card">
+          <h2>Daily activity — whole account</h2>
+          <div class="card-sub">All __TERM_HTML__ courses, for comparison</div>
+          <div id="chart-daily-account"></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>About this data.</b> Pulled live from the Canvas Analytics API on ${esc(o.dataAsOf)}, scoped to online and dual-enrollment sections (course/section code contains "E0#" or "DE"). ${fmt(o.onlineCoursesFailed)} matched courses returned no analytics (typically unpublished or without an active roster yet) and are excluded from the course-level views below. Account-wide figures cover every course in the term, not just online/DE. Grades in the last tab are still from a Summer 2026 CSV export &mdash; Fall grades are mostly ungraded this early in the term.
+      </div>
+    `;
+    panel.appendChild(el);
+    lineChart($('#chart-daily-online'), DATA.dailyActivity.map(d => ({ label: d.date.slice(5), value: d.views, extra: `participations: ${fmt(d.participations)}` })));
+    lineChart($('#chart-daily-account'), DATA.deptDailyActivity.map(d => ({ label: d.date.slice(5), value: d.views, extra: `participations: ${fmt(d.participations)}` })));
+  }
+
+  // ================= Panel: At-Risk =================
+  let riskState = { search: '', course: 'all', level: 'all', view: 'course', page: 1, pageSize: 50 };
+
+  function renderAtRisk() {
+    const panel = $('#panel-atrisk');
+    const courseNames = Array.from(new Set(DATA.atRiskRows.map(r => r.courseName + ' (' + r.courseCode + ')'))).sort();
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div class="stat-row">
+        <div class="stat-tile"><div class="label">Students at risk</div><div class="value crit">${fmt(DATA.atRiskStudents.length)}</div><div class="hint">flagged in at least one course</div></div>
+        <div class="stat-tile"><div class="label">At-risk enrollments</div><div class="value crit">${fmt(DATA.atRiskRows.length)}</div><div class="hint">student &times; course pairs</div></div>
+        <div class="stat-tile"><div class="label">Zero page views</div><div class="value">${fmt(DATA.atRiskRows.filter(r => r.zeroActivity).length)}</div><div class="hint">enrollments, live count</div></div>
+        <div class="stat-tile"><div class="label">Missing assignments</div><div class="value">${fmt(DATA.atRiskRows.filter(r => r.hasMissing).length)}</div><div class="hint">enrollments with 1+ missing</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Flagged roster</h2>
+        <div class="card-sub">Risk score: zero page views (+2) or bottom-third views for the course (+1); one or more missing assignments (+2); bottom-third participation for the course (+1). Higher score = more urgent.</div>
+        <div class="controls">
+          <input type="search" id="risk-search" placeholder="Search student name…" aria-label="Search student name">
+          <select id="risk-course" aria-label="Filter by course">
+            <option value="all">All courses (${courseNames.length})</option>
+            ${courseNames.map(c => `<option value="${escAttr(c)}">${esc(c)}</option>`).join('')}
+          </select>
+          <div class="toggle-group" role="group" aria-label="Risk level">
+            <button data-level="all" aria-pressed="true">All levels</button>
+            <button data-level="high" aria-pressed="false">High (4+)</button>
+            <button data-level="med" aria-pressed="false">Medium (2&ndash;3)</button>
+            <button data-level="low" aria-pressed="false">Low (1)</button>
+          </div>
+          <div class="toggle-group" role="group" aria-label="View">
+            <button data-view="course" aria-pressed="true">By enrollment</button>
+            <button data-view="student" aria-pressed="false">By student</button>
+          </div>
+        </div>
+        <div class="table-scroll"><table class="data" id="risk-table"><thead></thead><tbody></tbody></table></div>
+        <div class="pager" id="risk-pager"></div>
+      </div>
+    `;
+    panel.appendChild(el);
+
+    $('#risk-search').addEventListener('input', (e) => { riskState.search = e.target.value.toLowerCase(); riskState.page = 1; drawRiskTable(); });
+    $('#risk-course').addEventListener('change', (e) => { riskState.course = e.target.value; riskState.page = 1; drawRiskTable(); });
+    $$('.toggle-group [data-level]').forEach(b => b.addEventListener('click', () => {
+      $$('.toggle-group [data-level]').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true'); riskState.level = b.dataset.level; riskState.page = 1; drawRiskTable();
+    }));
+    $$('.toggle-group [data-view]').forEach(b => b.addEventListener('click', () => {
+      $$('.toggle-group [data-view]').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true'); riskState.view = b.dataset.view; riskState.page = 1;
+      $('#risk-course').disabled = riskState.view === 'student';
+      drawRiskTable();
+    }));
+    drawRiskTable();
+  }
+
+  function levelMatch(score, level) {
+    if (level === 'all') return true;
+    if (level === 'high') return score >= 4;
+    if (level === 'med') return score >= 2 && score <= 3;
+    if (level === 'low') return score === 1;
+    return true;
+  }
+
+  function drawRiskTable() {
+    const thead = $('#risk-table thead'), tbody = $('#risk-table tbody');
+    let rows, total;
+    if (riskState.view === 'course') {
+      rows = DATA.atRiskRows.filter(r =>
+        (riskState.course === 'all' || (r.courseName + ' (' + r.courseCode + ')') === riskState.course) &&
+        (riskState.search === '' || r.userName.toLowerCase().includes(riskState.search)) &&
+        levelMatch(r.riskScore, riskState.level)
+      );
+      rows = rows.slice().sort((a, b) => (b.riskScore - a.riskScore) || a.userName.localeCompare(b.userName));
+      thead.innerHTML = `<tr><th>Student</th><th>Course</th><th class="num">Page views</th><th class="num">Participations</th><th>Flags</th><th class="num">Risk</th></tr>`;
+      total = rows.length;
+      const start = (riskState.page - 1) * riskState.pageSize;
+      const page = rows.slice(start, start + riskState.pageSize);
+      tbody.innerHTML = page.map(r => `
+        <tr>
+          <td>${esc(r.userName)}</td>
+          <td>${esc(r.courseName)} <span style="color:var(--text-muted)">(${esc(r.courseCode)})</span></td>
+          <td class="num">${fmt(r.pageViews)}</td>
+          <td class="num">${fmt(r.participations)}</td>
+          <td><div class="flags">
+            ${r.zeroActivity ? '<span class="flag zero">Zero views</span>' : ''}
+            ${r.hasMissing ? `<span class="flag nosub">${r.missingAssignments} missing</span>` : ''}
+            ${(r.lowEngagement) ? '<span class="flag low">Low views</span>' : ''}
+          </div></td>
+          <td class="num"><span class="risk-pill r${Math.min(5, r.riskScore)}">${r.riskScore}</span></td>
+        </tr>`).join('') || `<tr><td colspan="6" style="color:var(--text-muted); padding:20px 10px;">No students match these filters.</td></tr>`;
+    } else {
+      rows = DATA.atRiskStudents.filter(r =>
+        (riskState.search === '' || r.userName.toLowerCase().includes(riskState.search)) &&
+        levelMatch(r.totalRiskScore, riskState.level)
+      );
+      rows = rows.slice().sort((a, b) => b.totalRiskScore - a.totalRiskScore);
+      thead.innerHTML = `<tr><th>Student</th><th class="num">Courses at risk</th><th class="num">Zero-view courses</th><th class="num">Courses w/ missing work</th><th class="num">Total risk</th></tr>`;
+      total = rows.length;
+      const start = (riskState.page - 1) * riskState.pageSize;
+      const page = rows.slice(start, start + riskState.pageSize);
+      tbody.innerHTML = page.map(r => `
+        <tr>
+          <td>${esc(r.userName)}</td>
+          <td class="num">${fmt(r.coursesAtRisk)}</td>
+          <td class="num">${fmt(r.zeroActivityCourses)}</td>
+          <td class="num">${fmt(r.missingAssignmentCourses)}</td>
+          <td class="num"><span class="risk-pill r${Math.min(5, r.totalRiskScore)}">${r.totalRiskScore}</span></td>
+        </tr>`).join('') || `<tr><td colspan="5" style="color:var(--text-muted); padding:20px 10px;">No students match these filters.</td></tr>`;
+    }
+    renderPager(total);
+  }
+
+  function renderPager(total) {
+    const pages = Math.max(1, Math.ceil(total / riskState.pageSize));
+    if (riskState.page > pages) riskState.page = pages;
+    const pager = $('#risk-pager');
+    pager.innerHTML = `
+      <div>${fmt(total)} result${total === 1 ? '' : 's'} &middot; page ${riskState.page} of ${pages}</div>
+      <div class="btns">
+        <button id="pg-prev" ${riskState.page <= 1 ? 'disabled' : ''}>Previous</button>
+        <button id="pg-next" ${riskState.page >= pages ? 'disabled' : ''}>Next</button>
+      </div>`;
+    $('#pg-prev')?.addEventListener('click', () => { riskState.page--; drawRiskTable(); });
+    $('#pg-next')?.addEventListener('click', () => { riskState.page++; drawRiskTable(); });
+  }
+
+  // ================= Panel: Engagement =================
+  let courseState = { search: '', page: 1, pageSize: 25, sortKey: 'views', sortDir: -1 };
+
+  function renderEngagement() {
+    const panel = $('#panel-engagement');
+    const topCourses = DATA.courses.slice(0, 15).map(c => ({ name: c.courseName + ' (' + c.courseCode + ')', value: c.views, extra: `students: ${fmt(c.studentCount)} &middot; at risk: ${fmt(c.atRiskStudents)}` }));
+    const catColors = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];
+    const nameMap = { other: 'Other (uncategorized)' };
+    const top7 = DATA.contentTypes.slice(0, 7);
+    const restViews = DATA.contentTypes.slice(7).reduce((s, c) => s + c.views, 0);
+    const ctRows = top7.map((c, i) => ({ name: nameMap[c.contentType] || (c.contentType[0].toUpperCase() + c.contentType.slice(1)), value: c.views, color: catColors[i] }));
+    if (restViews > 0) ctRows.push({ name: 'Additional categories', value: restViews, color: catColors[7] });
+
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div class="two-col">
+        <div class="card">
+          <h2>Top online/DE courses by page views</h2>
+          <div class="card-sub">Top 15 of ${DATA.courses.length} pulled courses</div>
+          <div id="chart-top-courses"></div>
+        </div>
+        <div class="card">
+          <h2>Views by content type</h2>
+          <div class="card-sub">Account-wide, __TERM_HTML__</div>
+          <div id="chart-content-types"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>All online/DE courses</h2>
+        <div class="card-sub">Sort by clicking a column header. Not-at-risk rate = students with no risk flags &divide; tracked roster.</div>
+        <div class="controls">
+          <input type="search" id="course-search" placeholder="Search course name or code…" aria-label="Search course name or code">
+        </div>
+        <div class="table-scroll"><table class="data" id="course-table"><thead></thead><tbody></tbody></table></div>
+        <div class="pager" id="course-pager"></div>
+      </div>
+
+      <div class="card">
+        <h2>Courses without analytics data</h2>
+        <div class="card-sub">${fmt(DATA.failedCourses.length)} matched online/DE courses returned no data from the API (usually unpublished or no active enrollments yet)</div>
+        <div class="table-scroll">
+          <table class="data">
+            <thead><tr><th>Course code</th><th>Canvas course ID</th></tr></thead>
+            <tbody>${DATA.failedCourses.map(f => `<tr><td>${esc(f.course_code || '—')}</td><td class="num">${fmt(f.course_id)}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    panel.appendChild(el);
+
+    hBarChart($('#chart-top-courses'), topCourses, { valueLabel: 'views', color: 'var(--seq-400)', label: 'Top courses by views' });
+    vBarChart($('#chart-content-types'), ctRows, { valueLabel: 'views', label: 'Views by content type' });
+    const legend = document.createElement('div');
+    legend.className = 'legend';
+    legend.innerHTML = ctRows.map(r => `<span class="item"><span class="swatch" style="background:${r.color}"></span>${esc(r.name)}</span>`).join('');
+    $('#chart-content-types').after(legend);
+
+    $('#course-search').addEventListener('input', (e) => { courseState.search = e.target.value.toLowerCase(); courseState.page = 1; drawCourseTable(); });
+    drawCourseTable();
+  }
+
+  function drawCourseTable() {
+    const thead = $('#course-table thead'), tbody = $('#course-table tbody');
+    const cols = [
+      { key: 'courseName', label: 'Course' },
+      { key: 'courseCode', label: 'Code' },
+      { key: 'studentCount', label: 'Students', num: true },
+      { key: 'atRiskStudents', label: 'At risk', num: true },
+      { key: 'engagementRate', label: 'Not-at-risk rate', num: true },
+      { key: 'views', label: 'Views', num: true },
+      { key: 'participations', label: 'Participations', num: true },
+    ];
+    thead.innerHTML = '<tr>' + cols.map(c => `<th class="${c.num ? 'num' : ''}" data-key="${c.key}">${c.label}${courseState.sortKey === c.key ? (courseState.sortDir === -1 ? ' ↓' : ' ↑') : ''}</th>`).join('') + '</tr>';
+    $$('#course-table th').forEach(th => th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (courseState.sortKey === key) courseState.sortDir *= -1; else { courseState.sortKey = key; courseState.sortDir = -1; }
+      drawCourseTable();
+    }));
+    let rows = DATA.courses.filter(c => courseState.search === '' || c.courseName.toLowerCase().includes(courseState.search) || c.courseCode.toLowerCase().includes(courseState.search));
+    rows = rows.slice().sort((a, b) => {
+      const k = courseState.sortKey;
+      let av = a[k], bv = b[k];
+      if (av === null || av === undefined) av = -Infinity;
+      if (bv === null || bv === undefined) bv = -Infinity;
+      if (typeof av === 'string') return av.localeCompare(bv) * courseState.sortDir;
+      return (av - bv) * courseState.sortDir;
+    });
+    const total = rows.length;
+    const pages = Math.max(1, Math.ceil(total / courseState.pageSize));
+    if (courseState.page > pages) courseState.page = pages;
+    const start = (courseState.page - 1) * courseState.pageSize;
+    const page = rows.slice(start, start + courseState.pageSize);
+    tbody.innerHTML = page.map(c => `
+      <tr>
+        <td>${esc(c.courseName)}</td>
+        <td>${esc(c.courseCode)}</td>
+        <td class="num">${fmt(c.studentCount)}</td>
+        <td class="num">${c.atRiskStudents > 0 ? '<span style="color:var(--critical); font-weight:600;">' + fmt(c.atRiskStudents) + '</span>' : '0'}</td>
+        <td class="num">${pct(c.engagementRate)}</td>
+        <td class="num">${fmt(c.views)}</td>
+        <td class="num">${fmt(c.participations)}</td>
+      </tr>`).join('') || `<tr><td colspan="7" style="color:var(--text-muted); padding:20px 10px;">No courses match this search.</td></tr>`;
+    const pager = $('#course-pager');
+    pager.innerHTML = `
+      <div>${fmt(total)} course${total === 1 ? '' : 's'} &middot; page ${courseState.page} of ${pages}</div>
+      <div class="btns">
+        <button id="cp-prev" ${courseState.page <= 1 ? 'disabled' : ''}>Previous</button>
+        <button id="cp-next" ${courseState.page >= pages ? 'disabled' : ''}>Next</button>
+      </div>`;
+    $('#cp-prev')?.addEventListener('click', () => { courseState.page--; drawCourseTable(); });
+    $('#cp-next')?.addEventListener('click', () => { courseState.page++; drawCourseTable(); });
+  }
+
+  // ================= Panel: Grades =================
+  function renderGrades() {
+    const panel = $('#panel-grades');
+    const order = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F', '(none)'];
+    const distMap = new Map(GRADES.gradeDistribution.map(g => [g.grade, g.count]));
+    const rows = order.filter(g => distMap.has(g)).map(g => ({ name: g === '(none)' ? 'No grade' : g, value: distMap.get(g) }));
+    const lowCourses = GRADES.courseGrades.slice(0, 10);
+
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div class="note"><b>Term note.</b> Live __TERM_HTML__ course grades are mostly ungraded this early in the term, so they aren't shown here yet. This tab still reflects a Summer 2026 CSV export &mdash; the most recently completed term with final grades posted.</div>
+
+      <div class="stat-row">
+        <div class="stat-tile"><div class="label">Courses graded</div><div class="value">${fmt(GRADES.courseGrades.length)}</div><div class="hint">Summer 2026</div></div>
+        <div class="stat-tile"><div class="label">Overall fail rate</div><div class="value crit">${pct(GRADES.fallFailRateSummer2026)}</div><div class="hint">of graded, non-blank final grades</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Final grade distribution</h2>
+        <div class="card-sub">Summer 2026, all courses</div>
+        <div id="chart-grades"></div>
+      </div>
+
+      <div class="card">
+        <h2>Lowest-performing courses</h2>
+        <div class="card-sub">By average final score, Summer 2026</div>
+        <div class="table-scroll">
+          <table class="data">
+            <thead><tr><th>Course</th><th class="num">Students</th><th class="num">Avg. final score</th></tr></thead>
+            <tbody>
+              ${lowCourses.map(c => `<tr><td>${esc(c.courseName)}</td><td class="num">${fmt(c.students)}</td><td class="num">${c.avgScore === null ? '—' : c.avgScore.toFixed(1)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    panel.appendChild(el);
+    vBarChart($('#chart-grades'), rows, { valueLabel: 'students', color: 'var(--seq-400)', label: 'Final grade distribution' });
+  }
+
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function escAttr(s) { return esc(s).replace(/`/g, '&#96;'); }
+
+  function renderPanel(name) {
+    if (name === 'overview') renderOverview();
+    else if (name === 'atrisk') renderAtRisk();
+    else if (name === 'engagement') renderEngagement();
+    else if (name === 'grades') renderGrades();
+  }
+
+  window.addEventListener('mousemove', (e) => { if (tooltip.classList.contains('show')) moveTip(e); });
+
+  renderPanel('overview');
+  $('#panel-overview').dataset.rendered = '1';
+})();
+</script>
+
+</body></html>

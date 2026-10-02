@@ -50,7 +50,12 @@ Output:
     output/analytics/<sis_term_id>/course_activity.json         (list, one entry per matched course)
     output/analytics/<sis_term_id>/course_student_summaries.json (list, one entry per matched course)
     output/analytics/<sis_term_id>/matched_courses.json          (the course list used)
-    output/analytics/<sis_term_id>/analytics_bundle.json         (everything above, combined — hand this one to Claude)
+    output/analytics/<sis_term_id>/analytics_bundle.json         (everything above, combined, plus course rosters)
+    output/canvas_engagement_pulse_<YYYY-MM-DD>.html             (dashboard, via build_dashboard.py)
+    ../dashboard_exports/canvas_engagement_pulse.html            (same dashboard, overwritten each run)
+    output/canvas_pbi_model_<YYYY-MM-DD>.xlsx                    (Power BI source workbook, via build_pbi_model.py)
+    ../dashboard_exports/canvas_pbi_model.xlsx                   (same workbook, overwritten each run —
+                                                                  refresh Analytics.pbix to load it)
 """
 
 import argparse
@@ -65,6 +70,8 @@ from pathlib import Path
 
 import requests
 
+import build_dashboard
+import build_pbi_model
 import config
 
 logger = logging.getLogger(__name__)
@@ -159,11 +166,22 @@ def fetch_course_analytics(course_id: int, headers: dict) -> dict:
     still honor pagination in case a huge section spans pages)."""
     activity_url = f"{config.CANVAS_URL}/api/v1/courses/{course_id}/analytics/activity"
     summaries_url = f"{config.CANVAS_URL}/api/v1/courses/{course_id}/analytics/student_summaries"
+    # Student summaries only carry user ids; the roster supplies names for the dashboard.
+    students_url = (
+        f"{config.CANVAS_URL}/api/v1/courses/{course_id}/users?per_page=100&enrollment_type[]=student"
+        "&enrollment_state[]=active&enrollment_state[]=invited&enrollment_state[]=completed&enrollment_state[]=inactive"
+    )
 
     activity = get_paginated(activity_url, headers)
     summaries = get_paginated(summaries_url, headers)
+    students = get_paginated(students_url, headers)
 
-    return {"course_id": course_id, "activity": activity, "student_summaries": summaries}
+    return {
+        "course_id": course_id,
+        "activity": activity,
+        "student_summaries": summaries,
+        "students": [{"id": u["id"], "name": u.get("name")} for u in students],
+    }
 
 
 def main() -> None:
@@ -212,6 +230,7 @@ def main() -> None:
 
     course_activity = []
     course_summaries = []
+    course_students = []
     failed = []
     for i, c in enumerate(matched, start=1):
         cid = c["id"]
@@ -220,6 +239,7 @@ def main() -> None:
             result = fetch_course_analytics(cid, headers)
             course_activity.append({"course_id": cid, "course_code": c.get("course_code"), "name": c.get("name"), "activity": result["activity"]})
             course_summaries.append({"course_id": cid, "course_code": c.get("course_code"), "name": c.get("name"), "student_summaries": result["student_summaries"]})
+            course_students.append({"course_id": cid, "students": result["students"]})
         except requests.exceptions.HTTPError as e:
             logger.warning("  failed for course %s: %s", cid, e)
             failed.append({"course_id": cid, "course_code": c.get("course_code"), "error": str(e)})
@@ -239,13 +259,17 @@ def main() -> None:
         "department": dept,
         "course_activity": course_activity,
         "course_student_summaries": course_summaries,
+        "course_students": course_students,
     }
     save_json(bundle, out_dir / "analytics_bundle.json")
 
     logger.info(
-        "Done in %.1fs — %d/%d courses pulled successfully. Send %s to Claude to merge into the dashboard.",
-        time.time() - start, len(matched) - len(failed), len(matched), out_dir / "analytics_bundle.json",
+        "Done in %.1fs — %d/%d courses pulled successfully.",
+        time.time() - start, len(matched) - len(failed), len(matched),
     )
+
+    build_dashboard.build(out_dir / "analytics_bundle.json")
+    build_pbi_model.build(out_dir / "analytics_bundle.json")
 
 
 if __name__ == "__main__":

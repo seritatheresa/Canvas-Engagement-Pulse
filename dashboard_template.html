@@ -438,6 +438,38 @@ __GRADES_DATA__
     container.appendChild(svg);
   }
 
+  // ================= Export helpers =================
+  function downloadBlob(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function csvCell(v) {
+    const s = String(v ?? '');
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function exportCSV(filename, headers, rows) {
+    const lines = [headers.map(csvCell).join(','), ...rows.map(r => r.map(csvCell).join(','))];
+    downloadBlob(filename, '\ufeff' + lines.join('\r\n'), 'text/csv;charset=utf-8;');
+  }
+  function exportWord(filename, title, headers, rows) {
+    const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${esc(title)}</title></head>
+<body>
+<h2 style="font-family:Calibri,sans-serif;">${esc(title)}</h2>
+<p style="font-family:Calibri,sans-serif;font-size:10pt;color:#52514e;">Exported ${esc(new Date().toLocaleString())} &middot; ${fmt(rows.length)} row${rows.length === 1 ? '' : 's'}</p>
+<table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;font-family:Calibri,sans-serif;font-size:10.5pt;">
+<thead><tr>${headers.map(h => `<th style="background:#f2f1ec;text-align:left;">${esc(h)}</th>`).join('')}</tr></thead>
+<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+</table>
+</body></html>`;
+    downloadBlob(filename, doc, 'application/msword');
+  }
+  function todayStamp() { return new Date().toISOString().slice(0, 10); }
+
   // ================= Panel: Overview =================
   function renderOverview() {
     const panel = $('#panel-overview');
@@ -476,6 +508,7 @@ __GRADES_DATA__
 
   // ================= Panel: At-Risk =================
   let riskState = { search: '', course: 'all', level: 'all', view: 'course', page: 1, pageSize: 50 };
+  let riskExport = { headers: [], rows: [] };
 
   function renderAtRisk() {
     const panel = $('#panel-atrisk');
@@ -508,6 +541,10 @@ __GRADES_DATA__
             <button data-view="course" aria-pressed="true">By enrollment</button>
             <button data-view="student" aria-pressed="false">By student</button>
           </div>
+          <div class="toggle-group" role="group" aria-label="Export">
+            <button id="risk-export-csv" type="button">Export Excel (CSV)</button>
+            <button id="risk-export-word" type="button">Export Word</button>
+          </div>
         </div>
         <div class="table-scroll"><table class="data" id="risk-table"><thead></thead><tbody></tbody></table></div>
         <div class="pager" id="risk-pager"></div>
@@ -527,6 +564,12 @@ __GRADES_DATA__
       $('#risk-course').disabled = riskState.view === 'student';
       drawRiskTable();
     }));
+    $('#risk-export-csv').addEventListener('click', () => {
+      exportCSV(`at-risk-students_${todayStamp()}.csv`, riskExport.headers, riskExport.rows);
+    });
+    $('#risk-export-word').addEventListener('click', () => {
+      exportWord(`at-risk-students_${todayStamp()}.doc`, 'At-Risk Students', riskExport.headers, riskExport.rows);
+    });
     drawRiskTable();
   }
 
@@ -565,6 +608,10 @@ __GRADES_DATA__
           </div></td>
           <td class="num"><span class="risk-pill r${Math.min(5, r.riskScore)}">${r.riskScore}</span></td>
         </tr>`).join('') || `<tr><td colspan="6" style="color:var(--text-muted); padding:20px 10px;">No students match these filters.</td></tr>`;
+      riskExport = {
+        headers: ['Student', 'Course', 'Course code', 'Page views', 'Participations', 'Zero views', 'Missing assignments', 'Low engagement', 'Risk score'],
+        rows: rows.map(r => [r.userName, r.courseName, r.courseCode, r.pageViews, r.participations, r.zeroActivity ? 'Yes' : 'No', r.missingAssignments || 0, r.lowEngagement ? 'Yes' : 'No', r.riskScore])
+      };
     } else {
       rows = DATA.atRiskStudents.filter(r =>
         (riskState.search === '' || r.userName.toLowerCase().includes(riskState.search)) &&
@@ -583,6 +630,10 @@ __GRADES_DATA__
           <td class="num">${fmt(r.missingAssignmentCourses)}</td>
           <td class="num"><span class="risk-pill r${Math.min(5, r.totalRiskScore)}">${r.totalRiskScore}</span></td>
         </tr>`).join('') || `<tr><td colspan="5" style="color:var(--text-muted); padding:20px 10px;">No students match these filters.</td></tr>`;
+      riskExport = {
+        headers: ['Student', 'Courses at risk', 'Zero-view courses', 'Courses w/ missing work', 'Total risk'],
+        rows: rows.map(r => [r.userName, r.coursesAtRisk, r.zeroActivityCourses, r.missingAssignmentCourses, r.totalRiskScore])
+      };
     }
     renderPager(total);
   }

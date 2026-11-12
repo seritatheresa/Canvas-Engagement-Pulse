@@ -1,0 +1,18 @@
+======================================================================
+INACTIVE USERS REPORT - SUMMARY
+======================================================================
+
+Cutoff Date (No login since): 2026-10-05
+Report Generated: 2026-11-06 12:43:10
+
+Online/DE Courses Checked: 158
+Inactive Students: 704
+Inactive Instructors: 30
+Failed Courses: 0
+
+Column Definitions:
+  - Name: User's full name
+  - ID Number: Canvas/SIS user ID
+  - Class Name: Full course name
+  - Class Number: Course code (e.g., BI 111 E01)
+  - Last Login Date: Last recorded activity (YYYY-MM-DD or 'Never')
